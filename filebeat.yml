@@ -1,0 +1,23 @@
+filebeat.inputs:
+  - type: container
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    processors:
+      # Decode app JSON into ql.* (avoids clashing with Filebeat/ES reserved fields)
+      - decode_json_fields:
+          fields: ["message"]
+          target: "ql"
+          overwrite_keys: false
+          add_error_key: true
+
+output.elasticsearch:
+  hosts: ["elasticsearch:9200"]
+  index: "quicklink-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "quicklink-logs"
+setup.template.pattern: "quicklink-logs-*"
+# ILM off → no automatic deletion. Retention is manual (see NOTES.md).
+setup.ilm.enabled: false
+
+setup.kibana:
+  host: "kibana:5601"
